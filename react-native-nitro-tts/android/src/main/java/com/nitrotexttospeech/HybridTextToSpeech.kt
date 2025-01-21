@@ -19,6 +19,10 @@ class HybridTextToSpeech: HybridTextToSpeechSpec(), TextToSpeech.OnInitListener 
     private var tts = TextToSpeech(context,this)
     private var initSuccess = false
 
+    init {
+        Log.d(TAG, "HybridTextToSpeech ${tts.defaultEngine}")
+    }
+
     override fun speak(text: String, options: TextToSpeechOptions?): Promise<Unit> {
         return Promise.async {
             if (!initSuccess) {
@@ -83,7 +87,7 @@ class HybridTextToSpeech: HybridTextToSpeechSpec(), TextToSpeech.OnInitListener 
                     identifier = it.name,
                 )
             }
-            return@async textToSpeechVoices.toTypedArray()
+            textToSpeechVoices.toTypedArray()
         }
 
     }
