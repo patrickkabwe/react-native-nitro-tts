@@ -21,7 +21,7 @@ export const TextToSpeech = {
   getVoices: async (): Promise<TextToSpeechVoice[]> => {
     return TextToSpeechNitroModule.getVoices()
   },
-  addEventListener: (event: EventName, listener: (word?: string) => void): (() => void) => {
-    return TextToSpeechNitroModule.addEventListener(event, listener)
+  addListener: (event: EventName, listener: (word?: string) => void): (() => void) => {
+    return TextToSpeechNitroModule.addListener(event, listener)
   },
 }

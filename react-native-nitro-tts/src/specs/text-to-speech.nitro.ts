@@ -24,5 +24,5 @@ export interface TextToSpeech extends HybridObject<{ ios: 'swift', android: 'kot
   pause(): Promise<boolean>
   resume(): Promise<boolean>
   getVoices(): Promise<TextToSpeechVoice[]>
-  addEventListener(event: EventName, listener: (word?: string) => void): () => void
+  addListener(event: EventName, listener: (word?: string) => void): () => void
 }

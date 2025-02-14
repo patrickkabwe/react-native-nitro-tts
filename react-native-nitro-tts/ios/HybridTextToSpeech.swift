@@ -58,32 +58,32 @@ final class HybridTextToSpeech: HybridTextToSpeechSpec {
     }
 
     
-    func addEventListener(event: EventName, listener: @escaping ((_ word: String?) -> Void)) throws -> (() -> Void) {
+    func addListener(event: EventName, listener: @escaping ((_ word: String?) -> Void)) throws -> (() -> Void) {
         listeners[event] = listener
         
         return { [weak self] in
             self?.listeners[event] = nil
         }
     }
+}
 
+extension HybridTextToSpeech: TextToSpeechDelegate {
+    internal func textToSpeechDidStart(_ synthesizer: AVSpeechSynthesizer) {
+        notifyListeners(withEvent: .start, nil)
+    }
+    
+    internal func textToSpeechDidFinish(_ synthesizer: AVSpeechSynthesizer) {
+        notifyListeners(withEvent: .finish, nil)
+    }
+
+    internal func textToSpeechDidReadText(_ synthesizer: AVSpeechSynthesizer, word: String) {
+        notifyListeners(withEvent: .word, word)
+    }
+    
     private func notifyListeners(withEvent event: EventName, _ data: String?) {
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
             listeners[event]?(data)
         }
-    }
-}
-
-extension HybridTextToSpeech: TextToSpeechDelegate {
-    func textToSpeechDidStart(_ synthesizer: AVSpeechSynthesizer) {
-        notifyListeners(withEvent: .start, nil)
-    }
-    
-    func textToSpeechDidFinish(_ synthesizer: AVSpeechSynthesizer) {
-        notifyListeners(withEvent: .finish, nil)
-    }
-
-    func textToSpeechDidReadText(_ synthesizer: AVSpeechSynthesizer, word: String) {
-        notifyListeners(withEvent: .word, word)
     }
 }
