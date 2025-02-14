@@ -9,6 +9,7 @@ import com.margelo.nitro.nitrotexttospeech.HybridTextToSpeechSpec
 import com.margelo.nitro.nitrotexttospeech.TextToSpeechOptions
 import com.margelo.nitro.nitrotexttospeech.TextToSpeechVoice
 import android.speech.tts.TextToSpeech
+import android.speech.tts.UtteranceProgressListener
 import android.speech.tts.Voice
 import com.margelo.nitro.NitroModules
 import java.util.Locale
@@ -18,16 +19,14 @@ class HybridTextToSpeech: HybridTextToSpeechSpec(), TextToSpeech.OnInitListener 
     var context = NitroModules.applicationContext
     private var tts = TextToSpeech(context,this)
     private var initSuccess = false
-
-    init {
-        Log.d(TAG, "HybridTextToSpeech ${tts.defaultEngine}")
-    }
+    private var currentText = ""
 
     override fun speak(text: String, options: TextToSpeechOptions?): Promise<Unit> {
         return Promise.async {
             if (!initSuccess) {
-                throw Error("$TAG Failed to initialize TextToSpeech.")
+                throw Error("$TAG: Failed to initialize TextToSpeech.")
             }
+            currentText = text
             options?.rate?.toFloat()?.let { tts.setSpeechRate(it) }
             options?.pitch?.toFloat()?.let { tts.setPitch(it) }
 
@@ -42,8 +41,8 @@ class HybridTextToSpeech: HybridTextToSpeechSpec(), TextToSpeech.OnInitListener 
             val params = Bundle().apply {
                 volume?.let { putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, it) }
             }
-
-            tts.speak(text, TextToSpeech.QUEUE_FLUSH, params, null)
+            val utteranceId = "utterance_${System.currentTimeMillis()}"
+            tts.speak(text, TextToSpeech.QUEUE_FLUSH, params, utteranceId)
         }
     }
 
@@ -94,9 +93,51 @@ class HybridTextToSpeech: HybridTextToSpeechSpec(), TextToSpeech.OnInitListener 
 
     override fun addListener(event: EventName, listener: (word: String?) -> Unit): () -> Unit {
         Log.d("NitroTextToSpeech", "addEventListener: $event")
+
+        tts.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
+            override fun onStart(utteranceId: String?) {
+                Log.i(TAG,"Started $utteranceId")
+                if (event == EventName.START) {
+                    listener(null)
+                }
+            }
+
+            override fun onDone(utteranceId: String?) {
+                Log.i(TAG,"Finished $utteranceId")
+                if (event == EventName.FINISH) {
+                    listener(null)
+                }
+            }
+
+            override fun onRangeStart(utteranceId: String?, start: Int, end: Int, frame: Int) {
+                if (event == EventName.WORD) {
+                    val word = getWordFromRange(start, end)
+                    listener(word)
+                }
+            }
+
+            override fun onStop(utteranceId: String?, interrupted: Boolean) {
+                Log.i(TAG,"Stopped $utteranceId")
+                super.onStop(utteranceId, interrupted)
+                tts.shutdown()
+            }
+
+            @Deprecated("Deprecated in Java")
+            override fun onError(utteranceId: String?) {
+
+            }
+        })
         return {}
     }
 
+    private fun getWordFromRange(start: Int, end: Int): String {
+        return try {
+            currentText.substring(start, end)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error extracting word: ${e.message}")
+            ""
+        }
+    }
 
     override fun onInit(status: Int) {
         initSuccess = status == TextToSpeech.SUCCESS

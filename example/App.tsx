@@ -31,23 +31,21 @@ function App(): React.JSX.Element {
   };
 
   useEffect(() => {
-    if (Platform.OS === 'ios') {
-      const unsubscribeStart = TextToSpeech.addListener('start', () => {
-        console.log('didStart');
-      });
-      const unsubscribeFinish = TextToSpeech.addListener('finish', () => {
-        console.log('didFinish');
-      });
-      const unsubscribeWord = TextToSpeech.addListener('word', word => {
-        console.log('didWordChange', word);
-      });
+    const unsubscribeStart = TextToSpeech.addListener('start', () => {
+      console.log('didStart');
+    });
+    const unsubscribeFinish = TextToSpeech.addListener('finish', () => {
+      console.log('didFinish');
+    });
+    const unsubscribeWord = TextToSpeech.addListener('word', word => {
+      console.log('didWordChange', word);
+    });
 
-      return () => {
-        unsubscribeFinish();
-        unsubscribeWord();
-        unsubscribeStart();
-      };
-    }
+    return () => {
+      unsubscribeFinish();
+      unsubscribeWord();
+      unsubscribeStart();
+    };
   }, []);
 
   return (
